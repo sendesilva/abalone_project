@@ -1,0 +1,287 @@
+---
+title: "abalone_project-build_rings(age)_predictor"
+author: "K Somachandra Senerath de Silva"
+date: "03/01/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# 1. Introduction / Overview
+The purpose of this project is to apply machine learning techniques such as linear and polynomial regression to the abalone dataset, from the UCI repository, to enable predicting the age (number of shell rings) of an abalone from its physical charateristics. 
+
+The dataset provides 8 physical characteristics (sex, length, diameter, height, whole weight, shucked weight, viscera weight, shell weight) as possible predictors in addition to the the number of shell rings (henceforth referred to as rings for convenience). This equates to a total of 9 attributes. The number of rings (integer), which varies from 1 to 29, +1.5 is thought to be a reasonable estimate of the age in years. There are a total of 4177 samples or records. For this project, the rings outcome variable is treatd as a continuous variable as it ranges from 1 to 29 with intervals of 1. 
+
+Repository citation: Dua, D. and Graff, C. (2019). UCI Machine Learning Repository 
+[http://archive.ics.uci.edu/ml]. Irvine, CA: University of California, School of Information 
+and Computer Science.  
+Dataset source: Abalone Data Set from UCI Machine Learning Repository,  https://archive.ics.uci.edu/ml/datasets/Abalone
+
+The dataset is first split into a 90% training set (train) and 10% test set (validation) where the train set is used for analysing and training models to be built for rings (age) prediction while the validation set is used to test the prediction accuracy of these models. The models trained using train set are used to predict the ratings in the validation set and then compared against actual values in the set. The accuracy is established using the RMSE (root mean square error) between the two values with a lower value indicating a smaller error and hence higher accuracy.
+
+This overview is followed by 3 more sections which contain the key steps performed:  
+Section 2. Methods and Analysis - where the dataset is split into the training and test sets and cleaned (if required) to the required form and prepared for building models of the desired prediction model. After a basic exploration to aid in the visualization of the dataset, the modeling approach is explained and several prediction models are built. The models are then run and their accuracies are determined.  
+Section 3. Results - the accuracies of the various models are compared and insights gained from running the models are discussed.  
+Section 4. Conclusion - recommendations are made, and their limitations with the potential for future work are discussed.  
+
+
+# 2. Methods and Analysis
+Predicting the age of abalone from physical measurements: the age of an abalone is determined by cutting the shell through the cone, staining it, and counting the number of rings through a  microscope -- the number of rings	(integer)	+1.5 is thought to be a reasonable estimate of the age in years. As the other measurements are easier to obtain, the purpose of this section is to use them to predict the number of rings (age). 
+
+## 2A. Data Manipulation
+Here the dataset is downloaded and split into the train and test sets. The original data has been preprocessed and cleaned prior to download where examples with missing values were removed from the abalone dataset (the majority having the predicted value missing), and the ranges of the continuous values have been scaled (by dividing by 200) for use with an ANN (abalone dataset readme file - abalone.names). As such no further cleaning is done and the dataset is deemed suitable for analysis.
+
+Install packages if required:
+```{r packages, warning=FALSE, error=FALSE, message=FALSE}
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
+if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
+if(!require(stringr)) install.packages("stringr", repos = "http://cran.us.r-project.org")
+if(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
+if(!require(ggplot2)) install.packages("ggplot", repos = "http://cran.us.r-project.org")
+if(!require(GGally)) install.packages("GGally", repos = "http://cran.us.r-project.org")
+```
+
+Libraries used:
+```{r libs, warning=FALSE, error=FALSE, message=FALSE}
+library(tidyverse)
+library(caret)
+library(data.table)
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(GGally)
+```
+
+### Download dataset
+```{r load_data, warning=FALSE, error=FALSE, message=FALSE}
+
+# Abalone dataset:
+# https://archive.ics.uci.edu/ml/datasets/Abalone
+
+### Auto-download and read the dataset into a data frame
+abalone <- read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data", header=FALSE)
+
+# add column names
+names(abalone) <- c("sex", "length", "diameter", "height", "weight.whole",
+                    "weight.shucked", "weight.viscera", "weight.shell", "rings")
+
+# confirm that there are 4177 observations
+nrow(abalone)
+
+# confirm that there are no missing values
+sum(is.na(abalone))
+```
+
+### Create training set (train) and test set (validation)
+Split data into train set (90%) and validation set (10%)
+
+```{r create_train_validation_set, warning=FALSE, error=FALSE, message=FALSE}
+# Create train set and validation set for testing train set predictions
+# Validation set will be 10% of abalone data derived from test_index
+set.seed(1, sample.kind="Rounding")
+
+# if using R 3.5 or earlier, use `set.seed(1)` instead
+test_index <- createDataPartition(y = abalone$rings, times = 1, p = 0.1, list = FALSE)
+train <- abalone[-test_index,]
+validation <- abalone[test_index,]
+
+# remove unnecessary data
+rm(test_index, abalone)
+```
+
+## 2B. Data Visualization
+Explores the train dataset: generally the correlation between the output variable 'rings' and any of the physical characteristics is only average at around 0.4 - 0.6. However there is better correlation between any 2 of the physical characteristics at around 0.8 - 0.9 which would affect their use as independant variables with respect to the output variable.
+
+```{r explore_dataset} 
+head(train)
+str(train)
+# number of unique rings and distribution
+train %>% summarise(n_rings = n_distinct(rings))
+table(train$rings)
+
+# visualizing correlation between various attributes of abalone
+ggpairs(train, progress = FALSE)
+```
+
+## 2C. Modeling Approach
+
+### Determining accuracy of model
+To compare different models, a loss function is required to measure how far predictions deviate from actual values. RMSE will be used as the loss function in this project where a lower value indicates a higher accuracy.
+
+Note: This is the typical error made when predicting the number of rings.
+
+```{r RMSE}
+RMSE <- function(true_rings, predicted_rings){
+  sqrt(mean((true_rings - predicted_rings)^2)) }
+```
+
+### Model 1: Reference model or just the average
+This will represent the worst possible prediction to be modelled. Assumes all abalone regardless of the physical characteristics have the same num of rings with the differences explained by random variation.
+
+
+```{r model_1}
+# calculates mean rings value
+mu_hat <- mean(train$rings)
+mu_hat
+
+# checking RMSE
+reference_rmse <- RMSE(validation$rings, mu_hat)
+reference_rmse
+
+# Creating a table to store and compare accuracies of different models
+rmse_results <- data_frame(method = "Model 1: Just the average", RMSE = reference_rmse)
+```
+
+### Model 2:  LR - External physical characteristics
+This model uses linear regression via the lm function to fit output variable "rings" to its external characteristics only: "length", "diameter", "height", "weight.whole". This does not require the physical charateristics post cutting open an abalone. Hence this method could help abalone farmers, sellers and buyers to value an abalone without having to cut it open. 
+
+```{r model_2}
+# Building / Training model
+fit2 <- lm(rings ~ weight.whole + diameter + length + height, data = train)
+fit2
+summary(fit2)
+
+# using model, fit2, to predict rings in validation set
+p2 <- predict(fit2, newdata = validation)
+
+str(p2)
+class(p2)
+
+# accuracy
+model_2_rmse <- RMSE(validation$rings, p2)
+model_2_rmse
+
+rmse_results <- bind_rows(rmse_results,
+                          data_frame(method="Model 2: LR - External physical characteristics", 
+                                     RMSE = model_2_rmse ))
+```
+
+### Model 3: LR - External physical characteristics less weight.whole 
+Model 2 is better than the average but still has a high RMSE. However it was observed in the
+summary of the fitted model that the p-value for the weight.whole variable was very high unlike the other variables and intercept. Hence model 3 will use model 2 without this variable, expecting a better RMSE.
+
+
+```{r model_3}
+# Building / Training model
+fit3 <- lm(rings ~ diameter + length + height, data = train)
+fit3
+summary(fit3)
+
+# using model, fit3, to predict rings in validation set
+p3 <- predict(fit3, newdata = validation)
+
+# accuracy
+model_3_rmse <- RMSE(validation$rings, p3)
+model_3_rmse
+# comment: does not help to remove weight.whole as the RMSE became higher i.e. less accurate
+
+rmse_results <- bind_rows(rmse_results,
+                          data_frame(method="Model 3: LR - External pc less weight.whole", 
+                                     RMSE = model_3_rmse ))
+
+
+```
+
+### Model 4: LR - Using all predictors 
+Models 2 and 3 still have a high RMSEs hence the need to explore the use of all 8 physical characteristics as predictors i.e. including sex.
+
+```{r model_4}
+# Building / Training model
+fit4 <- lm(rings ~ sex + length + diameter + height + weight.whole + weight.shucked
+           + weight.viscera + weight.shell, data = train)
+fit4
+summary(fit4)
+
+# using model, fit4, to predict rings in validation set
+p4 <- predict(fit4, newdata = validation)
+
+# accuracy
+model_4_rmse <- RMSE(validation$rings, p4)
+model_4_rmse
+
+rmse_results <- bind_rows(rmse_results,
+                          data_frame(method="Model 4: LR - Using all predictors", 
+                                     RMSE = model_4_rmse ))
+```
+
+### Model 5: LR - Using all predictors less length
+Model 4 summary statistics show that length is not significant at p = 0.05 and hence this model runs model 4 without length as a predictor.
+
+```{r model_5}
+# Building / Training model
+fit5 <- lm(rings ~ sex + diameter + height + weight.whole + weight.shucked
+           + weight.viscera + weight.shell, data = train)
+fit5
+summary(fit5)
+
+# using model, fit, to predict rings in validation set
+p5 <- predict(fit5, newdata = validation)
+
+# accuracy
+model_5_rmse <- RMSE(validation$rings, p5)
+model_5_rmse
+# model 5 produces a very slight improvement in RMSE
+
+rmse_results <- bind_rows(rmse_results,
+                          data_frame(method="Model 5: LR - Using all predictors less length", 
+                                     RMSE = model_5_rmse ))
+
+```
+
+### Model 6: Poly2Regression - all predictors
+The lm function with selective polynomial regression is applied to all predictors. After testing several 2nd and 3rd degree polynomial regression fits to various attributes, the 2nd degree fit is applied to all predictors except sex which is kept at a linear fit.
+
+```{r model_6}
+poly2model_all_pc <- lm(rings ~ sex + poly(diameter,2) + poly(height,2) + 
+                           poly(weight.whole,2) + poly(weight.shucked,2) + 
+                           poly(weight.viscera,2) + poly(weight.shell, 2), data = train)
+poly2model_all_pc
+summary(poly2model_all_pc)
+
+# using model, poly2model_all_pc, to predict rings in validation set
+p6 <- predict(poly2model_all_pc, newdata = validation)
+
+# accuracy
+model_6_rmse <- RMSE(validation$rings, p6)
+model_6_rmse
+
+rmse_results <- bind_rows(rmse_results,
+                          data_frame(method="Model 6: Poly2R - all physical characteristics", 
+                                     RMSE = model_6_rmse ))
+rmse_results %>% knitr::kable()
+```
+
+# 3. Results
+
+The table above, at the end of Model 5, summarizes the accuracies of the 5 models built to predict the number of rings (age) in section 2C above. The main insights gained are:  
+1. Linear regression using the external physical characteristics reduces the RMSE from 3.1266 to 2.4735 or approximately 21% while removing a high p-value variable, weight.whole, slightly increases the RMSE (less accurate).  
+2. Using all 8 predictors further reduces the RMSE from 2.4735 to 2.1741 or approximately a further 12% (approximately 30% more accurate than the worst case of just using the average).
+Dropping the length due to its high p-value only improved the RMSE very slightly.  
+3. Using the lm function and 2nd degree polynomial regression on all predictors (except sex), the RMSE further reduces to 2.1521 from 2.1741 (approximately 1%) or about 31% more accurate than the worst case. 
+
+Hence, overall it is seen that the best prediction comes using the lm function with 2nd degree polynomial regression on all the attributes (except sex) with an RMSE of about 2.152 whilst just using linear regression on all external characteristics as a more practical measure due not having to cut open the abalone loses about 15% accuracy (from 2.152 to 2.474).
+
+
+# 4. Conclusion
+
+From the results summarized in sction 3 and reasons given therein, Models 6 can is recommended to provide the algorithm for predicting the age (number of rings) of an abalone with an RMSE of 2.152 although this accuracy is not very high.
+
+The investigation has been limited to the use of linear and polynomial regressions as earlier work suggests that these methods achieve better results than from other methods including random forest, decision tree and SVR (Srishtee Kriti, 2019). The reasons for high RMSEs include using predictors which have a high correlation with each other and lack of environmental information, such as weather patterns and location (hence food availability) which may be required to solve the problem with greater accuracy.
+
+Future work on building new models could include the investigation of mitigating the use of highly correlated predictors, looking into affect of environmental conditions, use other models such as neural networks and looking at the problem as a classification problem.
+
+
+## References
+abalone.names, https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.names, <accessed Dec 26, 2019>.
+
+Kevin Markham https://github.com/justmarkham work on Abalone Dataset at GitHub
+https://github.com/ajschumacher/gadsdc1/blob/master/dataset_research/kevin_abalone_dataset.md, <accessed Dec 29, 2019>.
+
+Srishtee Kriti, 2019, Machine Learning with Abalone, https://medium.com/@srishtee.kriti/machine-learning-with-abalone-c752a8237e85?source=rss-6f0922344582------2, <accessed Feb 03 2020>.
+
+
+

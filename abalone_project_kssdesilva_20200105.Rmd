@@ -34,6 +34,11 @@ Predicting the age of abalone from physical measurements: the age of an abalone 
 ## 2A. Data Manipulation
 Here the dataset is downloaded and split into the train and test sets. The original data has been preprocessed and cleaned prior to download where examples with missing values were removed from the abalone dataset (the majority having the predicted value missing), and the ranges of the continuous values have been scaled (by dividing by 200) for use with an ANN (abalone dataset readme file - abalone.names). As such no further cleaning is done and the dataset is deemed suitable for analysis.
 
+Predicting the age of abalone from physical measurements: The age of an abalone is determined by cutting the shell through the cone, staining it, and counting the number of rings through a  microscope -- Rings	(integer)	+1.5 is thought to be a reasonable estimate of the age in years. As the other measurements are easier to obtain, the purpose of this section is to use them to predict the number of rings (age). 
+
+## 2A. Data Manipulation
+Here the dataset is downloaded and split into the train and test sets. The original data has been preprocessed and cleaned prior to download where examples with missing values were removed from the abalone dataset (the majority having the predicted value missing), and the ranges of the continuous values have been scaled (by dividing by 200) for use with an ANN (abalone dataset readme file - abalone.names). AS such no further cleaning is done and the dataset is deemed suitable for analysis.
+
 Install packages if required:
 ```{r packages, warning=FALSE, error=FALSE, message=FALSE}
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
@@ -74,6 +79,16 @@ nrow(abalone)
 
 # confirm that there are no missing values
 sum(is.na(abalone))
+
+# Abalone Data explore
+# data(abalone) # no dataset - now in dataframe
+names(abalone)
+dim(abalone)
+head(abalone)
+str(abalone)
+summary(abalone)
+head(abalone$rings)
+table(abalone$sex)
 ```
 
 ### Create training set (train) and test set (validation)
@@ -89,7 +104,7 @@ test_index <- createDataPartition(y = abalone$rings, times = 1, p = 0.1, list = 
 train <- abalone[-test_index,]
 validation <- abalone[test_index,]
 
-# remove unnecessary data
+# remove unecessary data
 rm(test_index, abalone)
 ```
 
@@ -182,8 +197,6 @@ model_3_rmse
 rmse_results <- bind_rows(rmse_results,
                           data_frame(method="Model 3: LR - External pc less weight.whole", 
                                      RMSE = model_3_rmse ))
-
-
 ```
 
 ### Model 4: LR - Using all predictors 
@@ -209,7 +222,8 @@ rmse_results <- bind_rows(rmse_results,
 ```
 
 ### Model 5: LR - Using all predictors less length
-Model 4 summary statistics show that length is not significant at p = 0.05 and hence this model runs model 4 without length as a predictor.
+Models 4 summary statistics show that length is not significant at p = 0.05 and hence this model runs model 4 without lenght as a predictor.
+
 
 ```{r model_5}
 # Building / Training model
@@ -234,6 +248,7 @@ rmse_results <- bind_rows(rmse_results,
 
 ### Model 6: Poly2Regression - all predictors
 The lm function with selective polynomial regression is applied to all predictors. After testing several 2nd and 3rd degree polynomial regression fits to various attributes, the 2nd degree fit is applied to all predictors except sex which is kept at a linear fit.
+
 
 ```{r model_6}
 poly2model_all_pc <- lm(rings ~ sex + poly(diameter,2) + poly(height,2) + 

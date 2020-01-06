@@ -3,8 +3,8 @@ title: "abalone_project-build_rings(age)_predictor"
 author: "K Somachandra Senerath de Silva"
 date: "03/01/2020"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -119,6 +119,7 @@ table(train$rings)
 
 # visualizing correlation between various attributes of abalone
 ggpairs(train, progress = FALSE)
+# It is observed that the correlation between the output variable "rings" and the predictor variables is average, around 0.4 - 0.6, whilst the correlation between the predictor variables is much higher, around 0.8 - 0.9, which would affect their usefulness as independant variables.
 ```
 
 ## 2C. Modeling Approach
@@ -275,7 +276,8 @@ The table above, at the end of Model 5, summarizes the accuracies of the 5 model
 1. Linear regression using the external physical characteristics reduces the RMSE from 3.1266 to 2.4735 or approximately 21% while removing a high p-value variable, weight.whole, slightly increases the RMSE (less accurate).  
 2. Using all 8 predictors further reduces the RMSE from 2.4735 to 2.1741 or approximately a further 12% (approximately 30% more accurate than the worst case of just using the average).
 Dropping the length due to its high p-value only improved the RMSE very slightly.  
-3. Using the lm function and 2nd degree polynomial regression on all predictors (except sex), the RMSE further reduces to 2.1521 from 2.1741 (approximately 1%) or about 31% more accurate than the worst case. 
+3. Using the lm function and 2nd degree polynomial regression on all predictors (except sex), the RMSE further reduces to 2.1521 from 2.1741 (approximately 1%) or about 31% more accurate than the worst case.
+4. The correlation between the output variable and the predictor variables is lower that the correlations between the predictor variables which would affect the performance of the fitted models.
 
 Hence, overall it is seen that the best prediction comes using the lm function with 2nd degree polynomial regression on all the attributes (except sex) with an RMSE of about 2.152 whilst just using linear regression on all external characteristics as a more practical measure due not having to cut open the abalone loses about 15% accuracy (from 2.152 to 2.474).
 

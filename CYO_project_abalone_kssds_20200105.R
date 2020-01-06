@@ -2,6 +2,7 @@
 ### The purpose of this project is to apply machine learning techniques such as linear and 
 # polynomial regression to the abalone dataset, from the UCI repository, to enable predicting
 # the age (number of shell rings) of an abalone from its physical charateristics. 
+# the age (number of shell rings) of an abalone from its physical characteristics. 
 
 # The dataset provides 8 physical characteristics (sex, length, diameter, height, whole weight,
 # shucked weight, viscera weight, shell weight) as possible predictors in addition to the the 

@@ -1,7 +1,6 @@
 
 ### The purpose of this project is to apply machine learning techniques such as linear and 
 # polynomial regression to the abalone dataset, from the UCI repository, to enable predicting
-# the age (number of shell rings) of an abalone from its physical charateristics. 
 # the age (number of shell rings) of an abalone from its physical characteristics. 
 
 # The dataset provides 8 physical characteristics (sex, length, diameter, height, whole weight,
@@ -9,7 +8,7 @@
 # number of shell rings (henceforth referred to as rings for convenience). This equates to a 
 # total of 9 attributes. The number of rings (integer), which varies from 1 to 29, +1.5 is 
 # thought to be a reasonable estimate of the age in years. There are a total of 4177 samples or 
-# records. For this project, the rings outcome variable is treatd as a continuous variable as it 
+# records. For this project, the rings outcome variable is treated as a continuous variable as it 
 # ranges from 1 to 29 with an intervals of 1.
 
 ## Dataset selected: +Abalone+ from the UCI Machine Learning Repository 
@@ -150,7 +149,7 @@ rmse_results %>% knitr::kable()
 ## Model 2: LR - External physical characteristics
 
 # Linear regression using the lm function and with external physical characteristics as 
-# predictors of num of rings as outcome This does not require the physical charateristics post
+# predictors of num of rings as outcome This does not require the physical characteristics post
 # cutting open an abalone. Hence this method could help abalone farmers, sellers and buyers to
 # value an abalone without having to cut it open.
 
@@ -169,8 +168,9 @@ class(p2)
 rmse_model_2 <- RMSE(validation$rings, p2)
 rmse_model_2
 
-rmse_results <- bind_rows(rmse_results, data_frame(method="Model 2: LR - External physical 
-                                                   characteristics", RMSE = rmse_model_2 ))
+rmse_results <- bind_rows(rmse_results,
+                          data_frame(method="Model 2: LR - External physical characteristics",
+                                     RMSE = rmse_model_2 ))
 rmse_results %>% knitr::kable()
 
 
@@ -192,8 +192,9 @@ rmse_model_3 <- RMSE(validation$rings, p3)
 rmse_model_3
 # comment: does not help to remove weight.whole as the RMSE became higher i.e. less accurate
 
-rmse_results <- bind_rows(rmse_results, data_frame(method="Model 3: LR - External pc less 
-                                                   weight.whole", RMSE = rmse_model_3 ))
+rmse_results <- bind_rows(rmse_results,
+                          data_frame(method="Model 3: LR - External pc less weight.whole",
+                                     RMSE = rmse_model_3 ))
 rmse_results %>% knitr::kable()
 
 
@@ -235,7 +236,7 @@ rmse_model_5 <- RMSE(validation$rings, p5)
 rmse_model_5 
 
 rmse_results <- bind_rows(rmse_results, 
-                          data_frame(method="Model 5: LR - using all precdictors less length", 
+                          data_frame(method="Model 5: LR - using all predictors less length", 
                                                    RMSE = rmse_model_5 ))
 rmse_results %>% knitr::kable()
 # produces a very slight improvement in RMSE

@@ -120,7 +120,6 @@ table(train$rings)
 
 # visualizing correlation between various attributes of abalone
 ggpairs(train, progress = FALSE)
-
 # It is observed that the correlation between the output variable "rings" and the predictor
 # variables is average, around 0.4 - 0.6, whilst the correlation between the predictor 
 # variables is much higher, around 0.8 - 0.9, which would affect their usefulness as 

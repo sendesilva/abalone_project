@@ -3,15 +3,15 @@ title: "abalone_project-build_rings(age)_predictor"
 author: "K Somachandra Senerath de Silva"
 date: "03/01/2020"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 # 1. Introduction / Overview
-The purpose of this project is to apply machine learning techniques such as linear and polynomial regression to the abalone dataset, from the UCI repository, to enable predicting the age (number of shell rings) of an abalone from its physical charateristics. 
+The purpose of this project is to apply machine learning techniques such as linear and polynomial regression to the abalone dataset, from the UCI repository, to enable predicting the age (number of shell rings) of an abalone from its physical characteristics. 
 
 The dataset provides 8 physical characteristics (sex, length, diameter, height, whole weight, shucked weight, viscera weight, shell weight) as possible predictors in addition to the the number of shell rings (henceforth referred to as rings for convenience). This equates to a total of 9 attributes. The number of rings (integer), which varies from 1 to 29, +1.5 is thought to be a reasonable estimate of the age in years. There are a total of 4177 samples or records. For this project, the rings outcome variable is treatd as a continuous variable as it ranges from 1 to 29 with intervals of 1. 
 The dataset provides 8 physical characteristics (sex, length, diameter, height, whole weight, shucked weight, viscera weight, shell weight) as possible predictors in addition to the the number of shell rings (henceforth referred to as rings for convenience). This equates to a total of 9 attributes. The number of rings (integer), which varies from 1 to 29, +1.5 is thought to be a reasonable estimate of the age in years. There are a total of 4177 samples or records. For this project, the rings outcome variable is treatd as a continuous variable as it ranges from 1 to 29 with an interval of 1. 
@@ -83,15 +83,11 @@ nrow(abalone)
 # confirm that there are no missing values
 sum(is.na(abalone))
 
-# Abalone Data explore
-# data(abalone) # no dataset - now in dataframe
+# Confirm column names
 names(abalone)
-dim(abalone)
-head(abalone)
-str(abalone)
+
+# Summary information
 summary(abalone)
-head(abalone$rings)
-table(abalone$sex)
 ```
 
 ### Create training set (train) and test set (validation)
@@ -155,7 +151,7 @@ rmse_results <- data_frame(method = "Model 1: Just the average", RMSE = referenc
 ```
 
 ### Model 2:  LR - External physical characteristics
-This model uses linear regression via the lm function to fit output variable "rings" to its external characteristics only: "length", "diameter", "height", "weight.whole". This does not require the physical charateristics post cutting open an abalone. Hence this method could help abalone farmers, sellers and buyers to value an abalone without having to cut it open. 
+This model uses linear regression via the lm function to fit output variable "rings" to its external characteristics only: "length", "diameter", "height", "weight.whole". This does not require the physical characteristics post cutting open an abalone. Hence this method could help abalone farmers, sellers and buyers to value an abalone without having to cut it open. 
 
 ```{r model_2}
 # Building / Training model
@@ -268,7 +264,7 @@ model_6_rmse <- RMSE(validation$rings, p6)
 model_6_rmse
 
 rmse_results <- bind_rows(rmse_results,
-                          data_frame(method="Model 6: Poly2R - all physical characteristics", 
+                          data_frame(method="Model 6: Poly2R - all predictors excl sex", 
                                      RMSE = model_6_rmse ))
 rmse_results %>% knitr::kable()
 ```
@@ -286,7 +282,7 @@ Hence, overall it is seen that the best prediction comes using the lm function w
 
 # 4. Conclusion
 
-From the results summarized in sction 3 and reasons given therein, Models 6 can is recommended to provide the algorithm for predicting the age (number of rings) of an abalone with an RMSE of 2.152 although this accuracy is not very high.
+From the results summarized in sction 3 and reasons given therein, Model 6 is recommended to provide the algorithm for predicting the age (number of rings) of an abalone with an RMSE of 2.152 although this accuracy is not very high.
 
 The investigation has been limited to the use of linear and polynomial regressions as earlier work suggests that these methods achieve better results than from other methods including random forest, decision tree and SVR (Srishtee Kriti, 2019). The reasons for high RMSEs include using predictors which have a high correlation with each other and lack of environmental information, such as weather patterns and location (hence food availability) which may be required to solve the problem with greater accuracy.
 

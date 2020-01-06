@@ -214,8 +214,9 @@ p4 <- predict(fit4, newdata = validation)
 rmse_model_4 <- RMSE(validation$rings, p4)
 rmse_model_4
 
-rmse_results <- bind_rows(rmse_results, data_frame(method="Model 4: LR - using all predictors",
-                                                   RMSE = rmse_model_4 ))
+rmse_results <- bind_rows(rmse_results,
+                          data_frame(method="Model 4: LR - using all predictors",
+                                     RMSE = rmse_model_4 ))
 rmse_results %>% knitr::kable()
 
 
@@ -297,8 +298,9 @@ rmse_p2m_all_pc <- RMSE(validation$rings, p2m_all_pc)
 rmse_p2m_all_pc 
 
 # Choose TEST4 as model 6 due best accuracy
-# Comparing with other results
+
 rmse_results <- bind_rows(rmse_results,
                           data_frame(method="Model 6: PolyR - using all predictors excl sex", 
                                                    RMSE = rmse_p2m_all_pc ))
+# Comparing with other results
 rmse_results %>% knitr::kable()

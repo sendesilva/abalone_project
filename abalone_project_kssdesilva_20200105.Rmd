@@ -3,8 +3,8 @@ title: "abalone_project-build_rings(age)_predictor"
 author: "K Somachandra Senerath de Silva"
 date: "03/01/2020"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
